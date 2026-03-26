@@ -23,6 +23,22 @@ Today's auth systems assume a human is present: OAuth flows pop up browser windo
 
 1. **Per-transaction settlement** — The protocol settles in batches (weekly/monthly), not on every individual request. Real-time per-transaction payment adds unnecessary complexity and latency.
 
+## Terminology
+
+- **Master Identity** — A human-owned account bound to email + payment method. The accountability root. Never travels with agents.
+- **Identity Service** — The trusted authority that signs agent tokens, maintains revocation lists, and settles billing between parties.
+- **Agent Token** — A signed, expiring JWT credential carried by an agent. Self-contained — verifiable offline by any provider holding the public key.
+- **Resource Provider** — Any API or service that accepts AIP agent tokens for authentication and billing.
+- **Facilitator** — (Future) A lightweight intermediary that can verify and settle on behalf of the Identity Service.
+
+## Principles
+
+- **One identity, one payment** — Human sets up once. Every agent and every service bills through that single relationship.
+- **Offline-first verification** — Providers verify tokens locally using cached public keys. No per-request call to the Identity Service.
+- **Human retains control** — Budgets, expiry, and instant revocation. The human can kill any agent at any time.
+- **Fiat first** — Real-world services want USD. Crypto support can come later, but the default path is fiat.
+- **Stateless agents** — Agents carry a token and present it. They never manage credentials, payment info, or accounts.
+
 ## Core Idea
 
 A **master identity** (human + billing) is the accountability root. Agents carry **delegated capability tokens** — signed, expiring credentials derived from the master identity. Resource providers verify tokens offline using the identity service's public key.
@@ -82,13 +98,13 @@ Signed with Ed25519 by the identity service. Verified offline by any resource pr
 | ![Billing](docs/diagrams/03-billing-settlement-flow.svg) | **[Billing & Settlement](docs/diagrams/03-billing-settlement-flow.svg)** — Master funds the Identity Service, Identity Service settles to providers |
 | ![Revocation](docs/diagrams/04-revocation-flow.svg) | **[Revocation](docs/diagrams/04-revocation-flow.svg)** — Human kills agent, revocation propagates |
 
-## Documentation
+## RFCs
 
-- **[Protocol Design](docs/protocol-design.md)** — Full design rationale, architecture, and trade-offs
-- **[AIP-001: Core Protocol](spec/aip-001-core.md)** — Formal protocol specification
-- **[AIP-002: Token Specification](spec/aip-002-token.md)** — Token format, signing, and verification
-- **[AIP-003: Billing & Settlement](spec/aip-003-billing.md)** — Credit system, usage reporting, provider settlement
-- **[Integration Guide](docs/integration-guide.md)** — How resource providers join the ecosystem
+- **[Protocol Design](rfcs/protocol-design.md)** — Full design rationale, architecture, and trade-offs
+- **[AIP-001: Core Protocol](rfcs/aip-001-core.md)** — Formal protocol specification
+- **[AIP-002: Token Specification](rfcs/aip-002-token.md)** — Token format, signing, and verification
+- **[AIP-003: Billing & Settlement](rfcs/aip-003-billing.md)** — Credit system, usage reporting, provider settlement
+- **[Integration Guide](rfcs/integration-guide.md)** — How resource providers join the ecosystem
 
 ## Reference Implementation
 
