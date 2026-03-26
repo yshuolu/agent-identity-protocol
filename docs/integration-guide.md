@@ -11,15 +11,14 @@ Integrating with AIP means your service can:
 - Accept requests from any AIP-authenticated agent
 - Verify identity offline (no per-request call to the identity service)
 - Bill usage back to the agent's master identity
-- Respect scope-based authorization and revocation
+- Respect revocation
 
-The integration has 5 steps:
+The integration has 4 steps:
 
 1. Register with the identity service
-2. Cache the IS's public keys
+2. Cache the Identity Service's public keys
 3. Accept and verify `Authorization: Agent <token>` headers
-4. Check scopes against the requested action
-5. Report usage for billing
+4. Report usage for billing
 
 ---
 
@@ -31,13 +30,12 @@ POST https://identity.example.com/v1/providers/register
 {
   "name": "Your Service Name",
   "domain": "api.yourservice.com",
-  "billing_endpoint": "https://api.yourservice.com/aip/billing-callback",
-  "supported_scopes": ["api.read", "api.write"]
+  "billing_endpoint": "https://api.yourservice.com/aip/billing-callback"
 }
 ```
 
 You'll receive:
-- The IS's JWKS endpoint URL for public key retrieval
+- The Identity Service's JWKS endpoint URL for public key retrieval
 - The revocation list endpoint URL
 - A provider credential for billing API calls
 
@@ -45,7 +43,7 @@ You'll receive:
 
 ## Step 2: Cache Public Keys
 
-Fetch and cache the IS's public keys:
+Fetch and cache the Identity Service's public keys:
 
 ```
 GET https://identity.example.com/v1/keys
@@ -141,32 +139,7 @@ Content-Type: application/json
 
 ---
 
-## Step 4: Check Scopes
-
-After verifying the token, check that the agent has the required scope for the requested action.
-
-```python
-def check_scope(required_scope: str, token_scopes: list[str]) -> bool:
-    for scope in token_scopes:
-        # Exact match
-        if scope == required_scope:
-            return True
-        # Wildcard match: "web.*" covers "web.read", "web.read.public"
-        if scope.endswith(".*"):
-            prefix = scope[:-2]  # "web"
-            if required_scope.startswith(prefix + "."):
-                return True
-    return False
-
-# Example: API endpoint requires "api.read"
-claims = verify_agent_token(request.headers["Authorization"])
-if not check_scope("api.read", claims["scopes"]):
-    raise Forbidden("aip_scope_denied")
-```
-
----
-
-## Step 5: Report Usage
+## Step 4: Report Usage
 
 After serving a request, report the usage to the identity service for billing:
 
@@ -188,11 +161,11 @@ POST https://identity.example.com/v1/billing/report
 - Batch billing reports (e.g., every 30 seconds or 100 requests)
 - Include a unique `request_id` for deduplication
 - Retry failed reports with exponential backoff
-- If the IS returns `402 Payment Required`, the master identity's balance is exhausted — deny further requests from that `mid`
+- If the Identity Service returns `402 Payment Required`, the master identity's balance is exhausted — deny further requests from that `mid`
 
 ---
 
-## Step 6 (Optional): Poll Revocation List
+## Step 5 (Optional): Poll Revocation List
 
 For the hybrid revocation model (recommended), periodically poll the revocation list:
 
@@ -273,7 +246,6 @@ app.get('/api/data', aipAuth, (req, res) => {
 - [ ] `Authorization: Agent <token>` header accepted
 - [ ] Algorithm pinned to `EdDSA` only
 - [ ] Signature, expiry, and audience verified
-- [ ] Scope checking implemented for all endpoints
 - [ ] IP and task binding enforced (if applicable)
 - [ ] Usage reported to billing endpoint
 - [ ] Revocation list polled (if using hybrid model)

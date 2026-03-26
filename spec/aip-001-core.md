@@ -8,15 +8,15 @@
 
 ## Abstract
 
-This document specifies the Agent Identity Protocol (AIP), a protocol for authenticating AI agents, authorizing their actions, and attributing their resource consumption to a human-controlled master identity. AIP enables agents to operate across multiple resource providers using a single delegated credential, with offline verification, scoped capabilities, and centralized billing.
+This document specifies the Agent Identity Protocol (AIP), a protocol for authenticating AI agents, authorizing their actions, and attributing their resource consumption to a human-controlled master identity. AIP enables agents to operate across multiple resource providers using a single delegated credential, with offline verification and centralized billing.
 
 ---
 
 ## 1. Terminology
 
 - **Master Identity (MI):** A human-owned identity record bound to an email, payment method, and optional KYC. The accountability root for all agent activity.
-- **Identity Service (IS):** The trusted authority that manages master identities, signs agent tokens, maintains the revocation list, and settles billing.
-- **Agent Token (AT):** A signed, scoped, expiring credential issued by the IS on behalf of a MI. Carried by agents and presented to resource providers.
+- **Identity Service:** The trusted authority that manages master identities, signs agent tokens, maintains the revocation list, and settles billing.
+- **Agent Token (AT):** A signed, expiring credential issued by the Identity Service on behalf of a MI. Carried by agents and presented to resource providers.
 - **Resource Provider (RP):** Any service that accepts AIP agent tokens for authentication and authorization.
 - **Agent Instance:** A running process that holds an agent token and makes requests to resource providers.
 
@@ -36,7 +36,6 @@ A master identity record MUST contain:
 | `created_at` | integer | Yes | Unix timestamp of creation |
 | `status` | enum | Yes | `active`, `suspended`, `closed` |
 | `kyc_level` | integer | No | KYC verification level (0 = none, 1 = basic, 2 = full) |
-| `max_scopes` | string[] | No | Maximum scopes this MI can delegate |
 
 The master identity MUST NOT be transmitted to agents or resource providers. Only the `mid` reference appears in agent tokens.
 
@@ -58,7 +57,6 @@ The master identity holder (or an authorized application acting on their behalf)
 
 ```json
 {
-  "scopes": ["web.read", "search.*"],
   "ttl": 3600,
   "budget": { "usd": 5.00 },
   "bind_ip": null,
@@ -79,12 +77,11 @@ The master identity holder (or an authorized application acting on their behalf)
 ```
 
 **Rules:**
-- The IS MUST verify the requester owns the MI
-- Requested scopes MUST be a subset of the MI's `max_scopes`
-- `ttl` MUST NOT exceed the IS's configured maximum (default: 24 hours)
+- The Identity Service MUST verify the requester owns the MI
+- `ttl` MUST NOT exceed the Identity Service's configured maximum (default: 24 hours)
 - `budget` MUST NOT exceed the MI's available credit
-- The IS MUST generate a unique `aid` for each token
-- The IS MUST sign the token with its Ed25519 private key
+- The Identity Service MUST generate a unique `aid` for each token
+- The Identity Service MUST sign the token with its Ed25519 private key
 
 ### 3.2 ACCESS — Token Presentation
 
@@ -97,11 +94,10 @@ Authorization: Agent <JWT>
 Resource providers MUST:
 
 1. Decode the JWT
-2. Verify the signature against the IS's public key (obtained during registration)
+2. Verify the signature against the Identity Service's public key (obtained during registration)
 3. Check `exp` >= current time
-4. Check the requested action is covered by `scopes`
-5. If `bind_ip` is set, verify the request source IP matches
-6. If `bind_task` is set, verify the `X-AIP-Task` header matches
+4. If `bind_ip` is set, verify the request source IP matches
+5. If `bind_task` is set, verify the `X-AIP-Task` header matches
 
 If all checks pass, the RP serves the request. If any check fails, the RP MUST return `401 Unauthorized` with an error body:
 
@@ -113,7 +109,7 @@ If all checks pass, the RP serves the request. If any check fails, the RP MUST r
 }
 ```
 
-Error codes: `aip_token_expired`, `aip_token_invalid`, `aip_scope_denied`, `aip_ip_mismatch`, `aip_task_mismatch`, `aip_token_revoked`.
+Error codes: `aip_token_expired`, `aip_token_invalid`, `aip_ip_mismatch`, `aip_task_mismatch`, `aip_token_revoked`.
 
 ### 3.3 REFRESH — Token Renewal
 
@@ -130,7 +126,7 @@ Agents MAY refresh their token before expiry using the refresh token:
 
 **Response:** `200 OK` — same as MINT response with a new JWT and expiry.
 
-The IS MUST deny refresh if:
+The Identity Service MUST deny refresh if:
 - The `aid` has been revoked
 - The MI is suspended or closed
 - The MI's credit is exhausted
@@ -147,14 +143,14 @@ The IS MUST deny refresh if:
 
 **Response:** `200 OK`
 
-The IS MUST:
+The Identity Service MUST:
 - Add the `aid` to the revocation list immediately
 - Invalidate the associated refresh token
 - Include the `aid` in the next revocation list publication
 
 ### 3.5 BILLING — Usage Reporting
 
-Resource providers report usage to the IS asynchronously:
+Resource providers report usage to the Identity Service asynchronously:
 
 **Request:** `POST /v1/billing/report`
 
@@ -170,7 +166,7 @@ Resource providers report usage to the IS asynchronously:
 }
 ```
 
-The IS MUST:
+The Identity Service MUST:
 - Deduct cost from the MI's credit balance
 - Append to the audit ledger
 - If the MI's balance reaches zero, add all active `aid`s for that MI to the revocation list
@@ -181,7 +177,7 @@ The IS MUST:
 
 ### 4.1 Format
 
-The IS publishes a revocation list at `GET /v1/revocations`:
+The Identity Service publishes a revocation list at `GET /v1/revocations`:
 
 ```json
 {
@@ -196,7 +192,7 @@ The IS publishes a revocation list at `GET /v1/revocations`:
 
 ### 4.2 Polling
 
-Resource providers SHOULD poll the revocation list at a configurable interval (recommended: 5 minutes). The IS SHOULD support `If-Modified-Since` headers to minimize bandwidth.
+Resource providers SHOULD poll the revocation list at a configurable interval (recommended: 5 minutes). The Identity Service SHOULD support `If-Modified-Since` headers to minimize bandwidth.
 
 ### 4.3 Revocation Reasons
 
@@ -209,91 +205,39 @@ Resource providers SHOULD poll the revocation list at a configurable interval (r
 
 ---
 
-## 5. Scope System
+## 5. Delegation Chains
 
-### 5.1 Scope Format
+### 5.1 Sub-Agent Minting
 
-Scopes follow a hierarchical dot-notation:
-
-```
-<domain>.<action>[.<qualifier>]
-```
-
-The wildcard `*` matches all actions within a domain:
-
-```
-web.*              — all web access
-web.read           — read-only web access
-web.read.public    — read-only, public URLs only
-```
-
-### 5.2 Scope Matching
-
-A scope `S` in a token covers a requested scope `R` if:
-- `S` equals `R` exactly, OR
-- `S` ends with `.*` and `R` starts with the prefix before `.*`
-
-Example: `web.*` covers `web.read`, `web.read.public`, and `web.write`.
-
-### 5.3 Standard Scopes
-
-| Scope | Description |
-|-------|-------------|
-| `web.*` | All web access |
-| `web.read` | HTTP GET requests |
-| `web.read.public` | GET to public (non-authenticated) URLs |
-| `web.write` | HTTP POST/PUT/PATCH/DELETE |
-| `search.*` | Search provider access |
-| `api.read` | Read-only API calls |
-| `api.write` | Write/mutate API calls |
-| `llm.call` | LLM API invocations |
-| `storage.read` | Read from storage |
-| `storage.write` | Write to storage |
-| `agent.delegate` | Mint sub-agent tokens |
-
-### 5.4 Scope Constraints
-
-- Scopes are **additive only** — there is no "deny" scope
-- An agent token's scopes MUST be a subset of the MI's `max_scopes`
-- A sub-agent's scopes MUST be a subset of the parent agent's scopes
-
----
-
-## 6. Delegation Chains
-
-### 6.1 Sub-Agent Minting
-
-If an agent token includes the `agent.delegate` scope, the agent MAY request sub-agent tokens from the IS:
+If an agent token has delegation allowed, the agent MAY request sub-agent tokens from the Identity Service:
 
 **Request:** `POST /v1/tokens/delegate`
 
 ```json
 {
   "parent_token": "<parent JWT>",
-  "scopes": ["web.read"],
   "ttl": 1800,
   "budget": { "usd": 1.00 }
 }
 ```
 
 **Rules:**
-- Sub-agent scopes MUST be a subset of parent scopes
 - Sub-agent `exp` MUST NOT exceed parent `exp`
 - Sub-agent budget MUST NOT exceed parent remaining budget
-- The IS records the delegation chain: `parent_aid → child_aid`
+- The Identity Service records the delegation chain: `parent_aid → child_aid`
 - Revoking a parent MUST revoke all descendants
 
-### 6.2 Chain Depth
+### 5.2 Chain Depth
 
-The IS SHOULD enforce a maximum delegation depth (recommended: 3 levels).
+The Identity Service SHOULD enforce a maximum delegation depth (recommended: 3 levels).
 
 ---
 
-## 7. Resource Provider Registration
+## 6. Resource Provider Registration
 
-### 7.1 Registration
+### 6.1 Registration
 
-Resource providers register with the IS:
+Resource providers register with the Identity Service:
 
 **Request:** `POST /v1/providers/register`
 
@@ -301,40 +245,39 @@ Resource providers register with the IS:
 {
   "name": "Example API Provider",
   "domain": "api.example.com",
-  "billing_endpoint": "https://api.example.com/aip/billing",
-  "supported_scopes": ["api.read", "api.write"]
+  "billing_endpoint": "https://api.example.com/aip/billing"
 }
 ```
 
-**Response:** Includes the IS's Ed25519 public key and the revocation list endpoint.
+**Response:** Includes the Identity Service's Ed25519 public key and the revocation list endpoint.
 
-### 7.2 Key Rotation
+### 6.2 Key Rotation
 
-The IS SHOULD support key rotation. When rotating keys:
+The Identity Service SHOULD support key rotation. When rotating keys:
 - The new key is published with a `kid` (key ID)
 - The old key remains valid for a grace period (recommended: 24 hours)
 - Agent tokens include the `kid` in the JWT header so RPs can select the correct verification key
 
 ---
 
-## 8. Security Considerations
+## 7. Security Considerations
 
-### 8.1 Token Theft
+### 7.1 Token Theft
 Agent tokens are bearer tokens. If stolen, an attacker can use them until expiry or revocation. Mitigations:
 - Short TTLs (15-60 min recommended)
 - IP binding where possible
 - Task binding for sensitive operations
 
-### 8.2 Replay Attacks
+### 7.2 Replay Attacks
 Resource providers SHOULD implement request deduplication using the `request_id` from billing reports, or by requiring a `jti` (JWT ID) claim and tracking seen values within the token's TTL window.
 
-### 8.3 Identity Service Compromise
-If the IS's signing key is compromised, all tokens become untrustworthy. Mitigations:
+### 7.3 Identity Service Compromise
+If the Identity Service's signing key is compromised, all tokens become untrustworthy. Mitigations:
 - HSM-backed signing keys
 - Key rotation with short validity periods
 - Emergency key revocation via out-of-band channel
 
-### 8.4 Budget Overflow
+### 7.4 Budget Overflow
 Resource providers report costs asynchronously. An agent could potentially overspend between billing cycles. Mitigations:
 - Conservative budget caps
 - Real-time budget checking for high-cost operations
@@ -342,7 +285,7 @@ Resource providers report costs asynchronously. An agent could potentially overs
 
 ---
 
-## 9. HTTP API Summary
+## 8. HTTP API Summary
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -352,11 +295,11 @@ Resource providers report costs asynchronously. An agent could potentially overs
 | `POST` | `/v1/tokens/delegate` | Mint a sub-agent token |
 | `GET` | `/v1/revocations` | Get the current revocation list |
 | `POST` | `/v1/billing/report` | Report usage for billing |
-| `GET` | `/v1/keys` | Get the IS's public keys (JWKS format) |
+| `GET` | `/v1/keys` | Get the Identity Service's public keys (JWKS format) |
 | `POST` | `/v1/providers/register` | Register a resource provider |
 
 ---
 
-## 10. Versioning
+## 9. Versioning
 
 This specification follows semantic versioning. The API path includes a major version prefix (`/v1/`). Breaking changes increment the major version.

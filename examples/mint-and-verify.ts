@@ -25,7 +25,6 @@ const now = Math.floor(Date.now() / 1000);
 const token = await new jose.SignJWT({
   mid,
   aid,
-  scopes: ['web.read', 'search.*', 'llm.call'],
   budget: { usd: 5.0 },
   bind: { ip: null, task: 'task_xyz', parent_aid: null },
   delegation: { allowed: false, max_depth: 0 },
@@ -54,29 +53,6 @@ try {
   console.log('=== Verified Token ===');
   console.log('Header:', protectedHeader);
   console.log('Payload:', JSON.stringify(payload, null, 2));
-  console.log();
-
-  // Check scope
-  const requiredScope = 'web.read';
-  const scopes = payload.scopes as string[];
-  const hasScope = scopes.some(
-    (s) => s === requiredScope || (s.endsWith('.*') && requiredScope.startsWith(s.slice(0, -2) + '.'))
-  );
-  console.log(`Scope check for '${requiredScope}':`, hasScope ? 'GRANTED' : 'DENIED');
-
-  // Check wildcard scope
-  const wildcardScope = 'search.google';
-  const hasWildcard = scopes.some(
-    (s) => s === wildcardScope || (s.endsWith('.*') && wildcardScope.startsWith(s.slice(0, -2) + '.'))
-  );
-  console.log(`Scope check for '${wildcardScope}':`, hasWildcard ? 'GRANTED' : 'DENIED');
-
-  // Check denied scope
-  const deniedScope = 'api.write';
-  const hasDenied = scopes.some(
-    (s) => s === deniedScope || (s.endsWith('.*') && deniedScope.startsWith(s.slice(0, -2) + '.'))
-  );
-  console.log(`Scope check for '${deniedScope}':`, hasDenied ? 'GRANTED' : 'DENIED');
 } catch (err) {
   console.error('Verification failed:', err);
 }

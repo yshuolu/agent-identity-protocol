@@ -3,7 +3,6 @@ export interface MasterIdentity {
   mid: string;
   email: string;
   status: 'active' | 'suspended' | 'closed';
-  max_scopes: string[];
   created_at: number;
 }
 
@@ -20,7 +19,6 @@ export interface AgentTokenPayload {
   // AIP claims
   mid: string;
   aid: string;
-  scopes: string[];
   budget?: { usd: number };
   bind?: {
     ip?: string | null;
@@ -35,7 +33,6 @@ export interface AgentTokenPayload {
 
 /** Request to mint a new agent token */
 export interface MintRequest {
-  scopes: string[];
   ttl: number;
   budget?: { usd: number };
   bind_ip?: string;

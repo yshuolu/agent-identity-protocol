@@ -30,7 +30,7 @@ AIP tokens are JWTs with three base64url-encoded segments: `header.payload.signa
 |-------|------|----------|-------------|
 | `alg` | string | Yes | MUST be `"EdDSA"` |
 | `typ` | string | Yes | MUST be `"JWT"` |
-| `kid` | string | Yes | Key ID referencing the IS's signing key |
+| `kid` | string | Yes | Key ID referencing the Identity Service's signing key |
 
 Implementations MUST reject tokens with `alg` values other than `"EdDSA"`. This eliminates algorithm confusion attacks (CVE-2015-9235 and similar).
 
@@ -46,7 +46,6 @@ Implementations MUST reject tokens with `alg` values other than `"EdDSA"`. This 
   "jti": "tok_8a2b3c4d",
   "mid": "master_id_abc123",
   "aid": "agt_7f3k9m2x",
-  "scopes": ["web.read", "search.*", "llm.call"],
   "budget": {
     "usd": 5.00
   },
@@ -79,7 +78,6 @@ Implementations MUST reject tokens with `alg` values other than `"EdDSA"`. This 
 |-------|------|----------|-------------|
 | `mid` | string | Yes | Master identity ID |
 | `aid` | string | Yes | Agent instance ID (same as `sub`) |
-| `scopes` | string[] | Yes | Array of granted scope strings |
 | `budget` | object | No | Spend cap: `{ "usd": <number> }` |
 | `bind.ip` | string | No | Lock to source IP or CIDR |
 | `bind.task` | string | No | Lock to a specific task ID |
@@ -89,7 +87,7 @@ Implementations MUST reject tokens with `alg` values other than `"EdDSA"`. This 
 
 ### 1.3 Signature
 
-The signature is computed over `base64url(header) + "." + base64url(payload)` using Ed25519 with the IS's private key.
+The signature is computed over `base64url(header) + "." + base64url(payload)` using Ed25519 with the Identity Service's private key.
 
 ```
 signature = Ed25519.sign(
@@ -115,7 +113,7 @@ publicKey:  32 bytes (published at /v1/keys)
 
 ### 2.2 Key Publication (JWKS)
 
-The IS publishes its public key(s) in JWKS format at `GET /v1/keys`:
+The Identity Service publishes its public key(s) in JWKS format at `GET /v1/keys`:
 
 ```json
 {
@@ -190,11 +188,7 @@ function verify(token: string, jwks: JWKS): Result {
 
 Implementations SHOULD allow a clock skew tolerance of up to 30 seconds for `iat` and `exp` checks.
 
-### 3.2 Scope Verification
-
-After token verification, the RP checks that the requested action is covered by the token's scopes. See AIP-001 Section 5 for scope matching rules.
-
-### 3.3 Binding Verification
+### 3.2 Binding Verification
 
 If `bind.ip` is set, the RP MUST verify the request's source IP matches the bound IP or CIDR range.
 
@@ -222,11 +216,11 @@ If `bind.task` is set, the RP MUST verify the `X-AIP-Task` request header matche
          └─────────┘
 ```
 
-- **MINT:** IS creates token, returns JWT + refresh token
+- **MINT:** Identity Service creates token, returns JWT + refresh token
 - **ACTIVE:** Agent uses token for resource access
 - **REFRESH:** Agent exchanges refresh token for new JWT (same `aid`, new `jti` and `exp`)
 - **EXPIRE:** Token TTL reached, agent must refresh or stop
-- **REVOKE:** Human or IS revokes token, refresh denied
+- **REVOKE:** Human or Identity Service revokes token, refresh denied
 
 ---
 

@@ -55,7 +55,6 @@ export async function mintToken(
   const payload: Omit<AgentTokenPayload, 'iss' | 'sub' | 'aud' | 'iat' | 'exp' | 'jti'> = {
     mid,
     aid,
-    scopes: request.scopes,
   };
 
   if (request.budget) {
@@ -108,7 +107,6 @@ export async function verifyToken(
   jwks: jose.FlattenedJWSInput | jose.GetKeyFunction<jose.JWSHeaderParameters, jose.FlattenedJWSInput>,
   options?: {
     audience?: string;
-    requiredScope?: string;
     sourceIp?: string;
     taskId?: string;
     revokedAids?: Set<string>;
@@ -125,11 +123,6 @@ export async function verifyToken(
     // Check revocation
     if (options?.revokedAids?.has(claims.aid)) {
       return { ok: false, error: 'aip_token_revoked', message: 'Agent token has been revoked' };
-    }
-
-    // Check scope
-    if (options?.requiredScope && !scopeCovers(claims.scopes, options.requiredScope)) {
-      return { ok: false, error: 'aip_scope_denied', message: `Scope '${options.requiredScope}' not granted` };
     }
 
     // Check IP binding
@@ -160,18 +153,4 @@ export async function verifyToken(
       message: err instanceof Error ? err.message : 'Token verification failed',
     };
   }
-}
-
-/**
- * Check if a set of granted scopes covers a required scope.
- */
-export function scopeCovers(granted: string[], required: string): boolean {
-  for (const scope of granted) {
-    if (scope === required) return true;
-    if (scope.endsWith('.*')) {
-      const prefix = scope.slice(0, -2);
-      if (required.startsWith(prefix + '.')) return true;
-    }
-  }
-  return false;
 }

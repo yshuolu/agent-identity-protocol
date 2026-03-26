@@ -1,4 +1,4 @@
-export { generateKeyPair, exportPublicJWK, mintToken, verifyToken, scopeCovers } from './token.js';
+export { generateKeyPair, exportPublicJWK, mintToken, verifyToken } from './token.js';
 export type {
   MasterIdentity,
   AgentTokenPayload,

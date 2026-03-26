@@ -1,17 +1,34 @@
 # Agent Identity Protocol (AIP)
 
-**A protocol for agent authentication, authorization, and accountability.**
+**A protocol for agent authentication, authorization, accountability, and payment.**
 
-AIP solves the fundamental problem of how AI agents prove who they are, what they're allowed to do, and who pays for it — without interactive authentication flows, per-service API keys, or exposing master credentials.
+## Problem
+
+The biggest hurdle for long-horizon agents is that they keep hitting setup walls for external APIs and services. Every new API requires account creation, subscription management, and API key provisioning — all designed for humans clicking through web forms. Agents can't open accounts for themselves, can't manage subscriptions, and can't provision their own credentials.
+
+Today's auth systems assume a human is present: OAuth flows pop up browser windows, API dashboards require manual key rotation, and billing is scattered across dozens of individual provider accounts. None of this works when your agent needs to autonomously call 10 different APIs over a 6-hour task.
+
+**We need an agent-era auth system** — one where a human sets up identity and payment once, and agents can immediately access any compatible service without per-provider onboarding.
+
+## Goals
+
+1. **Agent self-registration** — Agents can register for new services on their own, without human intervention for each provider
+2. **Agent auth** — A standard authentication mechanism that agents can use autonomously across any compatible service
+3. **Payment (fiat first)** — Built-in billing and settlement using fiat currency, so agents can consume paid services without per-provider payment setup
+4. **Security of agent access to services and payment** — Humans retain control over what agents can access and spend, with revocation, budgets, and audit trails
+
+## Non-Goals
+
+1. **Per-transaction settlement** — The protocol settles in batches (weekly/monthly), not on every individual request. Real-time per-transaction payment adds unnecessary complexity and latency.
 
 ## Core Idea
 
-A **master identity** (human + billing) is the accountability root. Agents carry **delegated capability tokens** — signed, scoped, expiring credentials derived from the master identity. Resource providers verify tokens offline using the identity service's public key.
+A **master identity** (human + billing) is the accountability root. Agents carry **delegated capability tokens** — signed, expiring credentials derived from the master identity. Resource providers verify tokens offline using the identity service's public key.
 
 ```
 Human (Master Identity)
   └─ Identity Service (trust anchor, signs tokens, settles bills)
-       └─ Agent Token (scoped, expiring, self-contained)
+       └─ Agent Token (expiring, self-contained)
             └─ Resource Provider (verifies offline, bills asynchronously)
 ```
 
@@ -24,13 +41,13 @@ Human (Master Identity)
 | Layer | What | Role |
 |-------|------|------|
 | **Layer 0** | Master Identity | Human accountability root (email + payment + optional KYC). Never travels. |
-| **Layer 1** | Agent Token | Signed, scoped credential. This is what agents carry and present. |
+| **Layer 1** | Agent Token | Signed, expiring credential. This is what agents carry and present. |
 | **Layer 2** | Resource Access | Providers verify tokens and serve requests. Billing flows back to master. |
 
 ## Protocol Flow
 
 ```
-1. MINT    — Human requests token from identity service with scopes + TTL + budget
+1. MINT    — Human requests token from identity service with TTL + budget
 2. ACCESS  — Agent presents token to resource provider (offline verification)
 3. BILLING — Resource provider reports usage against master identity
 4. REVOKE  — Human revokes token; propagates via revocation list
@@ -46,7 +63,6 @@ AIP tokens use **JWT with EdDSA (Ed25519)** signatures — compact, fast, no alg
   "aid": "agt_7f3k9m",
   "iat": 1710000000,
   "exp": 1710007200,
-  "scopes": ["web.read", "search.*", "llm.call"],
   "budget": { "usd": 5.00 },
   "bind_ip": null,
   "bind_task": "task_xyz"
@@ -59,9 +75,9 @@ Signed with Ed25519 by the identity service. Verified offline by any resource pr
 
 | Flow | Description |
 |------|-------------|
-| ![Mint](docs/diagrams/01-mint-flow.svg) | **[Token Mint](docs/diagrams/01-mint-flow.svg)** — Human requests a scoped token from IS |
+| ![Mint](docs/diagrams/01-mint-flow.svg) | **[Token Mint](docs/diagrams/01-mint-flow.svg)** — Human requests a token from the Identity Service |
 | ![Access](docs/diagrams/02-access-flow.svg) | **[Access](docs/diagrams/02-access-flow.svg)** — Agent presents token, provider verifies offline |
-| ![Billing](docs/diagrams/03-billing-settlement-flow.svg) | **[Billing & Settlement](docs/diagrams/03-billing-settlement-flow.svg)** — Master funds IS, IS settles to providers |
+| ![Billing](docs/diagrams/03-billing-settlement-flow.svg) | **[Billing & Settlement](docs/diagrams/03-billing-settlement-flow.svg)** — Master funds the Identity Service, Identity Service settles to providers |
 | ![Revocation](docs/diagrams/04-revocation-flow.svg) | **[Revocation](docs/diagrams/04-revocation-flow.svg)** — Human kills agent, revocation propagates |
 
 ## Documentation
@@ -81,8 +97,7 @@ See [`src/`](src/) for a TypeScript reference implementation covering token mint
 - **Ed25519 over RSA** — Smaller keys (32B vs 256B+), smaller signatures (64B vs 256B+), faster operations, no algorithm confusion
 - **JWT envelope** — Standard tooling ecosystem via RFC 8037 EdDSA support
 - **Hybrid revocation** — Short TTL tokens (15-60 min) + periodic revocation list polling. Balances offline verification speed with revocation freshness
-- **Hierarchical scopes** — `web.*`, `web.read`, `web.read.public` — additive only, never subtractive
-- **Agent delegation chains** — Agents can mint sub-agent tokens with subset scopes and shorter TTL, like X.509 intermediate certs
+- **Agent delegation chains** — Agents can mint sub-agent tokens with shorter TTL, like X.509 intermediate certs
 
 ## What This Enables
 

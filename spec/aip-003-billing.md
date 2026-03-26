@@ -8,7 +8,7 @@
 
 ## Abstract
 
-This document specifies the billing, credit, and settlement mechanics of AIP. The identity service (IS) acts as the sole financial clearinghouse — masters fund one account, providers receive settlement from one source. No party other than the IS handles cross-party money movement.
+This document specifies the billing, credit, and settlement mechanics of AIP. The Identity Service acts as the sole financial clearinghouse — masters fund one account, providers receive settlement from one source. No party other than the Identity Service handles cross-party money movement.
 
 ---
 
@@ -16,10 +16,10 @@ This document specifies the billing, credit, and settlement mechanics of AIP. Th
 
 **One payment relationship per party.**
 
-- A master sets up payment **once** with the IS
-- A provider sets up payout **once** with the IS
+- A master sets up payment **once** with the Identity Service
+- A provider sets up payout **once** with the Identity Service
 - Agents handle **zero** financial operations
-- The IS is the settlement layer between all parties
+- The Identity Service is the settlement layer between all parties
 
 ```
 ┌──────────┐         ┌──────────────────┐         ┌──────────────┐
@@ -44,7 +44,7 @@ This document specifies the billing, credit, and settlement mechanics of AIP. Th
 
 All billing is denominated in **AIP credits**, pegged 1:1 to USD at time of purchase. Credits are non-refundable, non-transferable between master identities.
 
-The IS maintains a **credit ledger** per master identity:
+The Identity Service maintains a **credit ledger** per master identity:
 
 ```
 CreditAccount {
@@ -59,7 +59,7 @@ CreditAccount {
 
 ### 2.2 Funding
 
-Masters add credits via the IS dashboard or API.
+Masters add credits via the Identity Service dashboard or API.
 
 **Request:** `POST /v1/billing/fund`
 
@@ -81,7 +81,7 @@ Masters add credits via the IS dashboard or API.
 }
 ```
 
-Payment processing is delegated to a payment processor (e.g., Stripe). The IS never stores raw card numbers — only tokenized payment method references.
+Payment processing is delegated to a payment processor (e.g., Stripe). The Identity Service never stores raw card numbers — only tokenized payment method references.
 
 ### 2.3 Auto Top-Up
 
@@ -99,7 +99,7 @@ Masters MAY configure automatic replenishment:
 }
 ```
 
-When `balance` drops below `threshold`, the IS charges `amount` to the payment method. The `monthly_cap` prevents runaway charges.
+When `balance` drops below `threshold`, the Identity Service charges `amount` to the payment method. The `monthly_cap` prevents runaway charges.
 
 ### 2.4 Budget Allocation
 
@@ -107,13 +107,12 @@ When minting an agent token, the master can set a budget cap:
 
 ```json
 {
-  "scopes": ["web.read", "llm.call"],
   "ttl": 3600,
   "budget": { "usd": 5.00 }
 }
 ```
 
-The IS **reserves** this amount from the master's balance at mint time:
+The Identity Service **reserves** this amount from the master's balance at mint time:
 
 ```
 balance: 73.50 → 68.50  (5.00 reserved for agt_7f3k9m2x)
@@ -181,7 +180,7 @@ Providers SHOULD batch reports (recommended: every 30 seconds or 100 requests, w
 
 ### 3.2 Real-Time Deduction
 
-On each accepted report, the IS:
+On each accepted report, the Identity Service:
 
 1. Deducts `cost` from the agent's reserved budget
 2. Deducts `cost` from the master's credit balance
@@ -198,14 +197,14 @@ Provider balance:  0.00 →  0.003  (owed to provider)
 
 When an agent's remaining budget reaches zero:
 
-1. IS adds the `aid` to the revocation list with reason `budget_exhausted`
-2. IS returns `402 budget_exhausted` on subsequent billing reports for that `aid`
+1. The Identity Service adds the `aid` to the revocation list with reason `budget_exhausted`
+2. The Identity Service returns `402 budget_exhausted` on subsequent billing reports for that `aid`
 3. Provider SHOULD deny further requests from this agent
 
 When a master's credit balance reaches zero:
 
-1. IS adds **all active `aid`s** for that `mid` to the revocation list
-2. IS triggers auto top-up if configured
+1. The Identity Service adds **all active `aid`s** for that `mid` to the revocation list
+2. The Identity Service triggers auto top-up if configured
 3. If auto top-up fails or is not configured, all agents for this master are effectively killed
 
 ---
@@ -235,7 +234,7 @@ Supported payout methods:
 
 ### 4.2 Settlement Ledger
 
-The IS maintains a settlement ledger per provider:
+The Identity Service maintains a settlement ledger per provider:
 
 ```
 SettlementAccount {
@@ -249,7 +248,7 @@ SettlementAccount {
 
 ### 4.3 Settlement Cycle
 
-The IS settles with providers on a configurable schedule:
+The Identity Service settles with providers on a configurable schedule:
 
 | Schedule | Settlement Day | Payment Arrives |
 |----------|---------------|-----------------|
@@ -259,13 +258,13 @@ The IS settles with providers on a configurable schedule:
 
 Settlement process:
 
-1. IS calculates `pending_balance` for the provider
-2. IS deducts its fee (see Section 5)
-3. IS initiates payout via the provider's configured payout method
-4. IS records the settlement in the settlement ledger
+1. The Identity Service calculates `pending_balance` for the provider
+2. The Identity Service deducts its fee (see Section 5)
+3. The Identity Service initiates payout via the provider's configured payout method
+4. The Identity Service records the settlement in the settlement ledger
 5. Provider receives funds
 
-**Request (IS-initiated):** `POST /v1/settlements/execute`
+**Request (Identity Service-initiated):** `POST /v1/settlements/execute`
 
 ```json
 {
@@ -326,11 +325,11 @@ Detailed breakdown per master identity:
 
 ---
 
-## 5. IS Fee Structure
+## 5. Identity Service Fee Structure
 
-The IS charges a percentage fee on all usage flowing through the platform:
+The Identity Service charges a percentage fee on all usage flowing through the platform:
 
-| Tier (monthly volume) | IS Fee |
+| Tier (monthly volume) | Identity Service Fee |
 |------------------------|--------|
 | $0 – $1,000 | 5% |
 | $1,001 – $10,000 | 4% |
@@ -406,7 +405,7 @@ If a provider believes usage was underreported or a settlement is incorrect:
 }
 ```
 
-The IS reviews against the audit ledger and resolves within 30 days.
+The Identity Service reviews against the audit ledger and resolves within 30 days.
 
 ### 7.2 Master Disputes
 
@@ -423,7 +422,7 @@ If a master believes they were overcharged:
 }
 ```
 
-The IS can issue credits for verified fraudulent usage.
+The Identity Service can issue credits for verified fraudulent usage.
 
 ---
 
@@ -431,7 +430,7 @@ The IS can issue credits for verified fraudulent usage.
 
 ### 8.1 Provider Price Registry
 
-Providers register their pricing with the IS so agents (and masters) can estimate costs before making requests:
+Providers register their pricing with the Identity Service so agents (and masters) can estimate costs before making requests:
 
 **Request:** `POST /v1/providers/pricing`
 
@@ -440,17 +439,17 @@ Providers register their pricing with the IS so agents (and masters) can estimat
   "provider_id": "prv_example_com",
   "pricing": [
     {
-      "scope": "api.read",
+      "action": "api.read",
       "unit": "request",
       "price": { "usd": 0.001 }
     },
     {
-      "scope": "api.write",
+      "action": "api.write",
       "unit": "request",
       "price": { "usd": 0.01 }
     },
     {
-      "scope": "llm.call",
+      "action": "llm.call",
       "unit": "1k_tokens",
       "price": { "usd": 0.03 },
       "metadata": { "model": "default" }
@@ -463,7 +462,7 @@ Providers register their pricing with the IS so agents (and masters) can estimat
 
 Agents or masters can query estimated costs:
 
-**Request:** `GET /v1/providers/prv_example_com/pricing?scope=api.read`
+**Request:** `GET /v1/providers/prv_example_com/pricing?action=api.read`
 
 This is informational only — actual costs are determined by the provider's billing report.
 
@@ -491,7 +490,7 @@ This is informational only — actual costs are determined by the provider's bil
 ## 10. Security & Compliance Considerations
 
 ### 10.1 Regulatory
-The IS operates as a financial intermediary. Depending on jurisdiction, this may require:
+The Identity Service operates as a financial intermediary. Depending on jurisdiction, this may require:
 - Money Services Business (MSB) registration (US FinCEN)
 - Payment Institution license (EU PSD2)
 - PCI DSS compliance for payment method handling

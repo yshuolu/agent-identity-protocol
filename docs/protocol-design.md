@@ -16,7 +16,7 @@ The fundamental idea: **master identity is a billing/accountability anchor**, an
 Bound to a human: email + payment method + optionally KYC. This is the accountability root. It never travels. It lives only in the identity service. Think of it like a root CA cert — it signs things, it doesn't go places.
 
 ### Layer 1 — Agent Token
-A signed, scoped, expiring credential derived from the master identity. This is what travels. Agents carry it and present it to resource providers. No login, no OAuth dance — just present the token.
+A signed, expiring credential derived from the master identity. This is what travels. Agents carry it and present it to resource providers. No login, no OAuth dance — just present the token.
 
 ### Layer 2 — Resource Access
 Resource providers (APIs, browsers, data services) accept the agent token directly by verifying the signature against the identity service's public key. This is fully offline-verifiable if you use JWT-style signing.
@@ -31,7 +31,6 @@ Resource providers (APIs, browsers, data services) accept the agent token direct
   "aid": "agt_7f3k9m",
   "iat": 1710000000,
   "exp": 1710007200,
-  "scopes": ["web.read", "search.*", "llm.call"],
   "budget": { "usd": 5.00 },
   "bind_ip": null,
   "bind_task": "task_xyz",
@@ -48,7 +47,7 @@ The signature is over the entire payload. Resource providers verify the sig usin
 ```
 1. MINT (human → identity service)
    Human requests an agent for a task.
-   Specifies: scopes, TTL, optional budget/binding.
+   Specifies: TTL, optional budget/binding.
    Identity service signs and returns AgentToken.
    Human hands token to agent process.
 
@@ -60,7 +59,6 @@ The signature is over the entire payload. Resource providers verify the sig usin
    - Decodes token
    - Verifies signature against identity service pubkey (cached)
    - Checks expiry
-   - Checks scope covers the requested action
    - Optionally: calls identity service to check revocation list
 
    If valid → serve request, charge against master identity.
@@ -82,7 +80,7 @@ The signature is over the entire payload. Resource providers verify the sig usin
 
 ## Role Responsibilities
 
-**Master Human** — the only accountable party. Owns credit, owns scopes, owns revocation power. Never travels with agents. Mints and forgets.
+**Master Human** — the only accountable party. Owns credit, owns revocation power. Never travels with agents. Mints and forgets.
 
 **Identity Service** — the trust anchor. Signs tokens, owns the ledger, settles bills, maintains the revocation list. The only entity all other parties need to trust.
 
@@ -105,35 +103,15 @@ Short TTL tokens (15–60 min) + revocation list that providers pull periodicall
 
 ---
 
-## Scope Design
-
-Scopes are hierarchical and additive, never subtractive:
-
-```
-web.*              — all web access
-web.read           — HTTP GET only
-web.read.public    — public URLs only (no auth-required sites)
-search.*           — any search provider
-api.read           — read-only API calls
-api.write          — write/mutate API calls
-llm.call           — call LLM APIs (billed to master)
-storage.read       — read from agent's scratch storage
-storage.write      — write to agent's scratch storage
-```
-
-An agent can never exceed its parent's permissions. The identity service enforces this at mint time.
-
----
-
 ## Ledger Design
 
 ### Credit Ledger
-Lives on the Identity Service. Tracks `mid → balance`. Services report costs, IS deducts. Master human tops up via their payment method. This is the financial settlement layer.
+Lives on the Identity Service. Tracks `mid → balance`. Services report costs, the Identity Service deducts. Master human tops up via their payment method. This is the financial settlement layer.
 
 ### Audit Ledger
 Append-only log of `(aid, mid, service, action, cost, timestamp)`. Never mutated, only appended. This is accountability — who did what, when, traceable to a real human.
 
-The agent itself never touches either ledger. It's purely a consumer. The IS and services do all ledger work asynchronously, out of the agent's critical path.
+The agent itself never touches either ledger. It's purely a consumer. The Identity Service and services do all ledger work asynchronously, out of the agent's critical path.
 
 ---
 
@@ -143,7 +121,7 @@ For a resource provider to join the ecosystem, they need to:
 
 1. **Register** with the identity service — get the pubkey and billing endpoint
 2. **Accept** `Authorization: Agent <token>` header
-3. **Verify** locally (sig + expiry + scope match)
+3. **Verify** locally (sig + expiry)
 4. **Report** usage to identity service for billing
 5. **Poll** revocation list periodically (for Model C)
 
@@ -185,7 +163,7 @@ JWT header:
 - **Decentralized** (keys on a blockchain/DHT) — probably overkill
 
 ### 3. Agent Spawning Agents
-Can an agent mint sub-agents? Useful for parallelism (a coordinator agent spawns workers). Rules: sub-agents can only have a subset of parent scopes, sub-agents expire no later than parent. This is the **delegation chain** — same model as X.509 intermediate certs.
+Can an agent mint sub-agents? Useful for parallelism (a coordinator agent spawns workers). Rules: sub-agents expire no later than parent. This is the **delegation chain** — same model as X.509 intermediate certs.
 
 ### 4. Resource Provider Discovery
 How does an agent know which providers accept AIP tokens? Options:
