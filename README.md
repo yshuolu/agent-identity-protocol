@@ -52,7 +52,7 @@ Human (Master Identity)
 
 ## Architecture
 
-![AIP Overview](docs/diagrams/00-overview.svg)
+![AIP Overview](diagrams/00-overview.svg)
 
 ## Identity Layers
 
@@ -93,10 +93,10 @@ Signed with Ed25519 by the identity service. Verified offline by any resource pr
 
 | Flow | Description |
 |------|-------------|
-| ![Mint](docs/diagrams/01-mint-flow.svg) | **[Token Mint](docs/diagrams/01-mint-flow.svg)** — Human requests a token from the Identity Service |
-| ![Access](docs/diagrams/02-access-flow.svg) | **[Access](docs/diagrams/02-access-flow.svg)** — Agent presents token, provider verifies offline |
-| ![Billing](docs/diagrams/03-billing-settlement-flow.svg) | **[Billing & Settlement](docs/diagrams/03-billing-settlement-flow.svg)** — Master funds the Identity Service, Identity Service settles to providers |
-| ![Revocation](docs/diagrams/04-revocation-flow.svg) | **[Revocation](docs/diagrams/04-revocation-flow.svg)** — Human kills agent, revocation propagates |
+| ![Mint](diagrams/01-mint-flow.svg) | **[Token Mint](diagrams/01-mint-flow.svg)** — Human requests a token from the Identity Service |
+| ![Access](diagrams/02-access-flow.svg) | **[Access](diagrams/02-access-flow.svg)** — Agent presents token, provider verifies offline |
+| ![Billing](diagrams/03-billing-settlement-flow.svg) | **[Billing & Settlement](diagrams/03-billing-settlement-flow.svg)** — Master funds the Identity Service, Identity Service settles to providers |
+| ![Revocation](diagrams/04-revocation-flow.svg) | **[Revocation](diagrams/04-revocation-flow.svg)** — Human kills agent, revocation propagates |
 
 ## RFCs
 
