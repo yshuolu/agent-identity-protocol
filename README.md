@@ -2,6 +2,8 @@
 
 **A protocol for agent authentication, authorization, accountability, and payment.**
 
+> Cookies and login forms gave the web a standard way to authenticate and authorize. Agents need the same — plus built-in payment.
+
 ## Problem
 
 The biggest hurdle for long-horizon agents is that they keep hitting setup walls for external APIs and services. Every new API requires account creation, subscription management, and API key provisioning — all designed for humans clicking through web forms. Agents can't open accounts for themselves, can't manage subscriptions, and can't provision their own credentials.
