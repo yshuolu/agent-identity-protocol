@@ -12,7 +12,7 @@ Today's auth systems assume a human is present: OAuth flows pop up browser windo
 
 ## Goals
 
-1. **Agent self-registration** — Agents can register for new services on their own, without human intervention for each provider
+1. **Zero per-provider onboarding** — Agents can access any compatible service immediately by presenting their token. No per-provider account creation, API key provisioning, or registration required.
 2. **Agent auth** — A standard authentication mechanism that agents can use autonomously across any compatible service
 3. **Payment (fiat first)** — Built-in billing and settlement using fiat currency, so agents can consume paid services without per-provider payment setup
 4. **Security of agent access to services and payment** — Humans retain control over what agents can access and spend, with revocation, budgets, and audit trails
