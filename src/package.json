@@ -1,0 +1,21 @@
+{
+  "name": "@aip/reference",
+  "version": "0.1.0",
+  "description": "Agent Identity Protocol - Reference Implementation",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "jose": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^22.0.0"
+  },
+  "license": "MIT"
+}

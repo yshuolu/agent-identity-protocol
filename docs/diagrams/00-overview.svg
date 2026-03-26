@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" font-family="Inter, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow0" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#475569"/>
+    </marker>
+    <marker id="arrow0b" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow0g" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e"/>
+    </marker>
+    <marker id="arrow0p" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8b5cf6"/>
+    </marker>
+    <filter id="shadow0">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="36" text-anchor="middle" font-size="22" font-weight="700" fill="#0f172a">Agent Identity Protocol — Overview</text>
+
+  <!-- Layer labels -->
+  <text x="30" y="100" font-size="11" font-weight="700" fill="#94a3b8" transform="rotate(-90, 30, 100)">LAYER 0</text>
+  <text x="30" y="260" font-size="11" font-weight="700" fill="#94a3b8" transform="rotate(-90, 30, 260)">LAYER 1</text>
+  <text x="30" y="400" font-size="11" font-weight="700" fill="#94a3b8" transform="rotate(-90, 30, 400)">LAYER 2</text>
+
+  <!-- Layer 0: Master Identity -->
+  <rect x="55" y="62" width="700" height="90" rx="12" fill="#eff6ff" fill-opacity="0.5" stroke="#bfdbfe" stroke-width="1"/>
+
+  <rect x="100" y="78" width="180" height="58" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2" filter="url(#shadow0)"/>
+  <text x="190" y="104" text-anchor="middle" font-size="14" font-weight="700" fill="#1e40af">Master Human</text>
+  <text x="190" y="122" text-anchor="middle" font-size="11" fill="#3b82f6">email + payment + KYC</text>
+
+  <rect x="420" y="78" width="200" height="58" rx="10" fill="#f0fdf4" stroke="#22c55e" stroke-width="2" filter="url(#shadow0)"/>
+  <text x="520" y="104" text-anchor="middle" font-size="14" font-weight="700" fill="#15803d">Identity Service</text>
+  <text x="520" y="122" text-anchor="middle" font-size="11" fill="#22c55e">signs tokens, settles bills</text>
+
+  <!-- Arrow: Master → IS -->
+  <line x1="280" y1="107" x2="410" y2="107" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow0b)"/>
+  <text x="345" y="99" text-anchor="middle" font-size="10" font-weight="600" fill="#3b82f6">funds + mints</text>
+
+  <!-- Layer 1: Agent Token -->
+  <rect x="55" y="172" width="700" height="115" rx="12" fill="#fef3c7" fill-opacity="0.3" stroke="#fde68a" stroke-width="1"/>
+
+  <!-- IS signs down to token -->
+  <line x1="520" y1="136" x2="520" y2="188" stroke="#22c55e" stroke-width="2" marker-end="url(#arrow0g)"/>
+  <text x="556" y="167" font-size="10" font-weight="600" fill="#22c55e">signs</text>
+
+  <!-- Agent Token box -->
+  <rect x="350" y="192" width="340" height="78" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" filter="url(#shadow0)"/>
+  <text x="520" y="216" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309">Agent Token (JWT)</text>
+  <text x="520" y="236" text-anchor="middle" font-size="11" fill="#d97706">mid + aid + scopes + budget + exp</text>
+  <text x="520" y="254" text-anchor="middle" font-size="11" fill="#d97706">Ed25519 signature — self-contained</text>
+
+  <!-- Agent box -->
+  <rect x="100" y="200" width="180" height="62" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2" filter="url(#shadow0)"/>
+  <text x="190" y="226" text-anchor="middle" font-size="14" font-weight="700" fill="#b45309">Agent Process</text>
+  <text x="190" y="244" text-anchor="middle" font-size="11" fill="#d97706">carries token, stateless</text>
+
+  <!-- Arrow: Token → Agent -->
+  <line x1="350" y1="231" x2="280" y2="231" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow0)"/>
+
+  <!-- Layer 2: Resource Access -->
+  <rect x="55" y="308" width="700" height="105" rx="12" fill="#faf5ff" fill-opacity="0.3" stroke="#e9d5ff" stroke-width="1"/>
+
+  <!-- Providers -->
+  <rect x="100" y="326" width="160" height="58" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow0)"/>
+  <text x="180" y="352" text-anchor="middle" font-size="13" font-weight="700" fill="#6d28d9">Provider A</text>
+  <text x="180" y="370" text-anchor="middle" font-size="11" fill="#8b5cf6">API service</text>
+
+  <rect x="310" y="326" width="160" height="58" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow0)"/>
+  <text x="390" y="352" text-anchor="middle" font-size="13" font-weight="700" fill="#6d28d9">Provider B</text>
+  <text x="390" y="370" text-anchor="middle" font-size="11" fill="#8b5cf6">LLM service</text>
+
+  <rect x="520" y="326" width="160" height="58" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow0)"/>
+  <text x="600" y="352" text-anchor="middle" font-size="13" font-weight="700" fill="#6d28d9">Provider N</text>
+  <text x="600" y="370" text-anchor="middle" font-size="11" fill="#8b5cf6">search, storage, ...</text>
+
+  <!-- Agent → Providers -->
+  <line x1="190" y1="262" x2="180" y2="316" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow0p)"/>
+  <line x1="190" y1="262" x2="390" y2="316" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow0p)"/>
+  <line x1="190" y1="262" x2="600" y2="316" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow0p)"/>
+
+  <!-- Token label on arrows -->
+  <text x="130" y="298" font-size="9" fill="#8b5cf6">present JWT</text>
+  <text x="295" y="289" font-size="9" fill="#8b5cf6">present JWT</text>
+  <text x="430" y="280" font-size="9" fill="#8b5cf6">present JWT</text>
+
+  <!-- Billing arrows: Providers → IS -->
+  <line x1="180" y1="384" x2="480" y2="425" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow0)"/>
+  <line x1="390" y1="384" x2="500" y2="425" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow0)"/>
+  <line x1="600" y1="384" x2="540" y2="425" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow0)"/>
+
+  <!-- Billing box -->
+  <rect x="440" y="425" width="150" height="38" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="515" y="442" text-anchor="middle" font-size="10" font-weight="600" fill="#475569">Async billing</text>
+  <text x="515" y="456" text-anchor="middle" font-size="10" fill="#94a3b8">report usage → IS</text>
+</svg>

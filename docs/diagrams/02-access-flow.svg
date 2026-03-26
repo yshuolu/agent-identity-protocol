@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" font-family="Inter, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334155"/>
+    </marker>
+    <marker id="arrow2g" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e"/>
+    </marker>
+    <filter id="shadow2">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">Access Flow</text>
+  <text x="400" y="56" text-anchor="middle" font-size="13" fill="#64748b">Agent presents token to resource provider — verified offline, no call to IS</text>
+
+  <!-- Actors -->
+  <!-- Agent -->
+  <rect x="40" y="85" width="160" height="60" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow2)"/>
+  <text x="120" y="113" text-anchor="middle" font-size="13" font-weight="600" fill="#b45309">Agent</text>
+  <text x="120" y="131" text-anchor="middle" font-size="11" fill="#f59e0b">Carries JWT</text>
+
+  <!-- Resource Provider -->
+  <rect x="320" y="85" width="160" height="60" rx="10" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5" filter="url(#shadow2)"/>
+  <text x="400" y="113" text-anchor="middle" font-size="13" font-weight="600" fill="#6d28d9">Resource Provider</text>
+  <text x="400" y="131" text-anchor="middle" font-size="11" fill="#8b5cf6">Verifies Offline</text>
+
+  <!-- IS (dimmed — not in hot path) -->
+  <rect x="600" y="85" width="160" height="60" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,3" filter="url(#shadow2)"/>
+  <text x="680" y="113" text-anchor="middle" font-size="13" font-weight="600" fill="#94a3b8">Identity Service</text>
+  <text x="680" y="131" text-anchor="middle" font-size="11" fill="#94a3b8">Not in hot path</text>
+
+  <!-- Lifelines -->
+  <line x1="120" y1="145" x2="120" y2="530" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="400" y1="145" x2="400" y2="530" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="680" y1="145" x2="680" y2="530" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="6,4"/>
+
+  <!-- Step 1: Present token -->
+  <line x1="200" y1="182" x2="390" y2="182" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow2)"/>
+  <rect x="175" y="166" width="240" height="28" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="295" y="185" text-anchor="middle" font-size="10" fill="#475569">1. Authorization: Agent &lt;JWT&gt;</text>
+
+  <!-- Step 2: Verification box -->
+  <rect x="315" y="206" width="170" height="170" rx="8" fill="#faf5ff" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="400" y="226" text-anchor="middle" font-size="11" font-weight="700" fill="#6d28d9">2. Offline Verification</text>
+
+  <text x="335" y="250" font-size="10" fill="#475569">a. Decode JWT segments</text>
+  <text x="335" y="270" font-size="10" fill="#475569">b. Check alg == "EdDSA"</text>
+  <text x="335" y="290" font-size="10" fill="#475569">c. Lookup kid in cached JWKS</text>
+  <text x="335" y="310" font-size="10" fill="#475569">d. Verify Ed25519 signature</text>
+  <text x="335" y="330" font-size="10" fill="#475569">e. Check exp &gt;= now</text>
+  <text x="335" y="350" font-size="10" fill="#475569">f. Check scope covers action</text>
+  <text x="335" y="367" font-size="10" fill="#475569">g. Check revocation list (cached)</text>
+
+  <!-- No network call callout -->
+  <rect x="510" y="270" width="145" height="40" rx="6" fill="#fef2f2" stroke="#fecaca" stroke-width="1"/>
+  <text x="582" y="286" text-anchor="middle" font-size="10" font-weight="600" fill="#dc2626">No network call</text>
+  <text x="582" y="302" text-anchor="middle" font-size="10" fill="#ef4444">to IS needed here</text>
+
+  <!-- Step 3: Success response -->
+  <line x1="390" y1="410" x2="200" y2="410" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arrow2g)"/>
+  <rect x="205" y="396" width="180" height="28" rx="4" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+  <text x="295" y="415" text-anchor="middle" font-size="10" fill="#15803d">3. 200 OK — serve response</text>
+
+  <!-- Step 4: Async billing -->
+  <line x1="480" y1="460" x2="670" y2="460" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow2)"/>
+  <rect x="490" y="446" width="175" height="28" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="577" y="465" text-anchor="middle" font-size="10" fill="#64748b">4. Async: report usage for billing</text>
+
+  <!-- Latency note -->
+  <rect x="40" y="496" width="340" height="30" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1"/>
+  <text x="210" y="516" text-anchor="middle" font-size="11" fill="#1d4ed8">Verification adds ~0.1ms latency (Ed25519 verify is fast)</text>
+</svg>

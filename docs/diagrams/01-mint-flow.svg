@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" font-family="Inter, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#334155"/>
+    </marker>
+    <filter id="shadow1">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">Token Mint Flow</text>
+  <text x="400" y="56" text-anchor="middle" font-size="13" fill="#64748b">Human requests a scoped, time-limited agent token from the Identity Service</text>
+
+  <!-- Actors -->
+  <!-- Human -->
+  <rect x="40" y="90" width="160" height="60" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow1)"/>
+  <text x="120" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#1e40af">Master Human</text>
+  <text x="120" y="136" text-anchor="middle" font-size="11" fill="#3b82f6">Accountability Root</text>
+
+  <!-- Identity Service -->
+  <rect x="320" y="90" width="160" height="60" rx="10" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5" filter="url(#shadow1)"/>
+  <text x="400" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#15803d">Identity Service</text>
+  <text x="400" y="136" text-anchor="middle" font-size="11" fill="#22c55e">Trust Anchor</text>
+
+  <!-- Agent -->
+  <rect x="600" y="90" width="160" height="60" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow1)"/>
+  <text x="680" y="118" text-anchor="middle" font-size="13" font-weight="600" fill="#b45309">Agent Process</text>
+  <text x="680" y="136" text-anchor="middle" font-size="11" fill="#f59e0b">Token Carrier</text>
+
+  <!-- Lifelines -->
+  <line x1="120" y1="150" x2="120" y2="480" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="400" y1="150" x2="400" y2="480" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <line x1="680" y1="150" x2="680" y2="480" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- Step 1: Request -->
+  <rect x="50" y="180" width="140" height="24" rx="4" fill="#eff6ff"/>
+  <text x="120" y="196" text-anchor="middle" font-size="11" font-weight="600" fill="#1e40af">1. Request Token</text>
+  <line x1="200" y1="192" x2="390" y2="192" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow1)"/>
+  <rect x="210" y="204" width="170" height="40" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="295" y="220" text-anchor="middle" font-size="10" fill="#475569">POST /v1/tokens/mint</text>
+  <text x="295" y="236" text-anchor="middle" font-size="10" fill="#475569">{ scopes, ttl, budget }</text>
+
+  <!-- Step 2: Validate -->
+  <rect x="330" y="262" width="140" height="44" rx="6" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+  <text x="400" y="278" text-anchor="middle" font-size="10" font-weight="600" fill="#15803d">2. Validate</text>
+  <text x="400" y="293" text-anchor="middle" font-size="10" fill="#22c55e">Check MI, scopes, credit</text>
+
+  <!-- Step 3: Sign -->
+  <rect x="330" y="318" width="140" height="44" rx="6" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+  <text x="400" y="334" text-anchor="middle" font-size="10" font-weight="600" fill="#15803d">3. Sign Token</text>
+  <text x="400" y="349" text-anchor="middle" font-size="10" fill="#22c55e">Ed25519 sign, reserve budget</text>
+
+  <!-- Step 4: Return token -->
+  <line x1="390" y1="386" x2="200" y2="386" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow1)"/>
+  <rect x="210" y="372" width="170" height="28" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="295" y="391" text-anchor="middle" font-size="10" fill="#475569">4. Return { JWT, aid, refresh_token }</text>
+
+  <!-- Step 5: Hand to agent -->
+  <line x1="200" y1="430" x2="670" y2="430" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow1)"/>
+  <rect x="320" y="416" width="170" height="28" rx="4" fill="#fef3c7" stroke="#fde68a" stroke-width="1"/>
+  <text x="405" y="435" text-anchor="middle" font-size="10" fill="#92400e">5. Hand token to agent process</text>
+
+  <!-- Step 5 note -->
+  <rect x="560" y="450" width="200" height="28" rx="4" fill="#fefce8" stroke="#fde68a" stroke-width="1"/>
+  <text x="660" y="469" text-anchor="middle" font-size="10" fill="#a16207">Agent now carries a self-contained JWT</text>
+</svg>
